@@ -11,7 +11,7 @@ It is designed to work with **[SimpleFIN](https://simplefin.org/)**, a standard 
 
 [SimpleFIN](https://simplefin.org/) is an open protocol for connecting financial institutions with applications like YAFA.  
 
-It costs $15/year for access to the [SimpleFIN Bridge](https://beta-bridge.simplefin.org/). You can connect up to 25 institutions and create 25 apps. This is worth it IMO for access to the data.
+It costs $15/year for access to the [SimpleFIN Bridge](https://beta-bridge.simplefin.org/). You can connect up to 25 institutions and create 25 apps. This is worth it IMO for access to the data. (Project can be ran with the "demo" credentials in provided .env.template to at least see how things work; This is a demo provided by SimpleFIN bridge API, not myself).
 
 In short, SimpleFIN is alternative to services like Plaid (using the [MX platform](https://www.mx.com/) to connect)
 
