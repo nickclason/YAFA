@@ -4,6 +4,7 @@ services:
     container_name: yafa
     volumes:
       - /yafa/data:/yafa/app/data # persistent data storage for the sqlite db <local_path:docker_container>
+      # - /Users/nick/projects/finance/yafa/data:/yafa/app/data
     env_file:
       - .env
 
