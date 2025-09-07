@@ -4,6 +4,19 @@
 
 ### How to Run
 
+#### Expected File Structure:
+```
+YAFA\
+    data\ (CREATE PRIOR TO RUNNING)
+    yafa\
+    .gitignore
+    .env(.template)
+    docker-compose.yaml
+    Dockerfile
+    README.md
+    requirements.txt
+```
+
 See .env.template for how to create ".env" file required.
 Ensure the local/persistent data directory exists prior to running.
 
