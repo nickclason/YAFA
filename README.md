@@ -12,6 +12,8 @@ It is designed to work with **[SimpleFIN](https://simplefin.org/)**, a standard 
 [SimpleFIN](https://simplefin.org/) is an open protocol for connecting financial institutions with applications like YAFA.  
 It was created with **privacy and simplicity** in mind:
 
+It costs $15/year for access to the [SimpleFIN Bridge](https://beta-bridge.simplefin.org/). You can connect up to 25 institutions and create 25 apps. This is worth it IMO for access to the data.
+
 - ✅ **You control your data** – YAFA never stores or shares credentials beyond what is necessary to connect via SimpleFIN.  
 - 🔒 **Security first** – credentials are exchanged securely, and only for the accounts you choose to link.  
 - 📊 **Read-only access** – SimpleFIN provides access to account balances and transactions, not the ability to move money.  
