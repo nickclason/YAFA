@@ -1,14 +1,9 @@
 from sqlalchemy import String, Float, Integer, ForeignKey, ForeignKeyConstraint
-from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-# TODO: Support "Holdings" (not documented anywhere?)
-# TODO: Add categories to transactions
+from .BaseModel import Base
 
-
-class Base(DeclarativeBase):
-    pass
-
-
+# Org Model
 class Org(Base):
     __tablename__ = "orgs"
 
@@ -25,6 +20,21 @@ class Org(Base):
     )
 
 
+def parse_org_data(data: dict) -> Org | None:
+    org = None
+
+    org = Org(
+        id=data["id"],
+        name=data["name"],
+        domain=data.get("domain"),
+        url=data.get("url"),
+        sfin_url=data.get("sfin-url")
+    )
+
+    return org
+
+
+# Account Model
 class Account(Base):
     __tablename__ = "accounts"
 
@@ -46,6 +56,24 @@ class Account(Base):
     )
 
 
+def parse_account_data(data: dict) -> Account | None:
+    account = None
+
+    account = Account(
+        org_domain=data["org"]["domain"],
+        id=data["id"],
+        name=data["name"],
+        currency=data.get("currency"),
+        balance=data.get("balance", 0.0),
+        available_balance=data.get("available-balance", 0.0),
+        balance_date=data.get("balance-date", 0)
+    )
+
+    return account
+
+
+# Transaction Model
+# TODO: Support "Holdings" (not documented anywhere?)
 class Transaction(Base):
     __tablename__ = "transactions"
 
@@ -67,4 +95,46 @@ class Transaction(Base):
     memo: Mapped[str] = mapped_column(String, default=None)
     transacted_at: Mapped[int] = mapped_column(Integer, default=0)
 
+    category_id: Mapped[int | None] = mapped_column(
+        Integer, ForeignKey("categories.id"), nullable=True
+    )
+
     account: Mapped["Account"] = relationship("Account", back_populates="transactions")
+    category: Mapped["Category"] = relationship("Category", back_populates="transactions")
+
+
+def parse_transaction_data(data: dict, account: Account, org: Org) -> Transaction | None:
+    transaction = None
+
+    transaction = Transaction(
+        account_org=org.domain,
+        account_id=account.id,
+        id=data["id"],
+        posted=data.get("posted", 0),
+        transacted_at=data.get("transacted_at", 0),
+        amount=data.get("amount", 0.0),
+        description=data.get("description"),
+        payee=data.get("payee"),
+        memo=data.get("memo"),
+        # category=data.get("category"), # TODO: Add support for categories
+    )
+
+    return transaction
+
+
+# Category Model
+class Category(Base):
+    __tablename__ = "categories"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    name: Mapped[str] = mapped_column(String, unique=True, nullable=False)
+    monthly_budget: Mapped[float] = mapped_column(Float, default=0.0)
+
+    transactions: Mapped[list["Transaction"]] = relationship(
+        "Transaction",
+        back_populates="category"
+    )
+
+
+# class Budget(Base):
+#     __tablename__ = "budgets"
