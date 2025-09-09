@@ -13,4 +13,4 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy project files into the container
 COPY . .
 
-CMD ["python", "-u", "./yafa/app/main.py"]
+CMD ["python", "-u", "./yafa/main.py"]

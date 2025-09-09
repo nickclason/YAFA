@@ -127,13 +127,21 @@ class Category(Base):
     __tablename__ = "categories"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    type: Mapped[str] = mapped_column(String, unique=False, nullable=False, default="Expense")  # or "Income"
     name: Mapped[str] = mapped_column(String, unique=True, nullable=False)
-    monthly_budget: Mapped[float] = mapped_column(Float, default=0.0)
+
+    # monthly_budget: Mapped[float] = mapped_column(Float, default=0.0)
 
     transactions: Mapped[list["Transaction"]] = relationship(
         "Transaction",
         back_populates="category"
     )
+
+    def is_expense(self) -> bool:
+        return self.type == "Expense"
+    
+    def is_income(self) -> bool:
+        return self.type == "Income"
 
 
 # class Budget(Base):
