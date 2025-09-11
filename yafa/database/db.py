@@ -7,43 +7,49 @@ from sqlalchemy.orm import Session
 import json
 
 
-# from Model.BudgetModel import Budget
-# from model.CategoryModel import Category
-
-if os.environ.get("DOCKER_MODE", False):
-    DB_PATH = "sqlite:////yafa/data/yafaDB.db"
-else:
-    DB_PATH = "sqlite:///data/yafaDB.db"
-
-
 def init_db() -> None:
+    if os.environ.get("DOCKER_MODE", False):
+        DB_PATH = "sqlite:////yafa/data/yafaDB.db"
+    else:
+        DB_PATH = "sqlite:///data/yafaDB.db"
+    print(f"Initializing DB at {DB_PATH}")
+
     engine = create_engine(DB_PATH, echo=True, future=True)
     sf_model.Base.metadata.create_all(engine)
 
 
-def populate_db(data: dict) -> None:
-    engine = create_engine(DB_PATH, echo=True, future=True)
+def get_db_session() -> Session:
+    if os.environ.get("DOCKER_MODE", False):
+        DB_PATH = "sqlite:////yafa/data/yafaDB.db"
+    else:
+        DB_PATH = "sqlite:///data/yafaDB.db"
 
+    engine = create_engine(DB_PATH, echo=True, future=True)
     session = Session(engine)
+    return session
+
+
+def populate_db(data: dict) -> None:
+    session = get_db_session()
     for account_data in data.get("accounts", []):
         org_data = account_data.get("org", [])
 
         org = session.get(sf_model.Org, org_data["domain"])
         if not org:
-            org = sf_model.parse_org_data(org_data) if org_data else None
+            org = sf_model.create_org(org_data) if org_data else None
             session.add(org)
             session.commit()
 
         account = session.get(sf_model.Account, (org.domain, account_data["id"]))
         if not account:
-            account = sf_model.parse_account_data(account_data)
+            account = sf_model.create_account(account_data)
             session.add(account)
             session.commit()
 
         for transaction_data in account_data.get("transactions", []):
             transaction = session.get(sf_model.Transaction, (org.domain, account.id, transaction_data["id"]))
             if not transaction:
-                transaction = sf_model.parse_transaction_data(transaction_data, account, org)
+                transaction = sf_model.create_transaction(transaction_data, account, org)
                 session.add(transaction)
                 session.commit()
 
