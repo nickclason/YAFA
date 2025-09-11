@@ -5,7 +5,7 @@ from util.categorize import naive_categorize_transaction
 from sqlalchemy import create_engine, select, and_
 from sqlalchemy.orm import Session
 import json
-
+import datetime as dt
 
 def init_db() -> None:
     if os.environ.get("DOCKER_MODE", False):
@@ -59,6 +59,17 @@ def populate_db(data: dict) -> None:
     session.close()
 
 
+def query_category(session: Session, type: str, name: str) -> sf_model.Category | None:
+    category = session.scalar(
+        select(sf_model.Category).where(and_(
+            sf_model.Category.type == type,
+            sf_model.Category.name == name
+        ))
+    )
+
+    return category
+
+
 def populate_default_categories(session: Session):
     """Insert some common budget categories if they don't already exist."""
 
@@ -68,28 +79,15 @@ def populate_default_categories(session: Session):
         if type not in ["Income", "Expense"]:
             return
         for name in default_categories[type]:
-            exists = session.scalar(
-                select(sf_model.Category)
-                .where(and_(
-                    sf_model.Category.type == type,
-                    sf_model.Category.name == name
-                ))
-            )
+            category = query_category(session, type, name)
 
-            if not exists:
+            if not category:
                 session.add(sf_model.Category(type=type, name=name))
 
     session.commit()
 
 
 def auto_categorize_transactions(session: Session, fn=naive_categorize_transaction) -> None:
-    """
-    Auto-categorize all transactions using the provided categorization function.
-
-    Args:
-        session (Session): SQLAlchemy session
-        fn (callable): function that takes (payee, description) and returns a category name (str or None)
-    """
     transactions = session.query(sf_model.Transaction).all()
 
     for transaction in transactions:
@@ -104,13 +102,15 @@ def auto_categorize_transactions(session: Session, fn=naive_categorize_transacti
         if not category_name:
             continue  # Skip if the function returns None / can't categorize... Currently this shouldn't be possible
 
+        guess_type = "Expense" if transaction.amount < 0 else "Income"
+
         # Try to fetch the category from the DB
         # TODO: this isn't exactly ideal...
-        category = session.scalar(select(sf_model.Category).where(sf_model.Category.name == category_name))
+        category = query_category(session, guess_type, category_name)
 
         # Optionally create the category if missing
         if not category:
-            category = sf_model.Category(name=category_name)  # Default to "Expense" type for new categories
+            category = sf_model.Category(type=guess_type, name=category_name)  # Default to "Expense" type for new categories
             session.add(category)
             session.flush()  # ensures category.id is available
 
@@ -118,3 +118,34 @@ def auto_categorize_transactions(session: Session, fn=naive_categorize_transacti
         transaction.category = category
 
     session.commit()
+
+
+def create_budgets(session: Session, budgets: dict[sf_model.Category: float], start_date: dt.datetime, end_date: dt.datetime) -> None:
+    for cat, amt in budgets.items():
+        budget = sf_model.Budget(
+            category=cat,
+            amount=amt,
+            period_start=start_date,
+            period_end=end_date,
+        )
+        session.add(budget)
+    session.commit()
+
+
+def populate_sample_budgets(session: Session) -> None:
+    groceries = query_category(session, "Expense", "Groceries")
+    dining_out = query_category(session, "Expense", "Dining Out")
+    rent = query_category(session, "Expense", "Rent")
+    utilities = query_category(session, "Expense", "Utilities")
+
+    create_budgets(
+        session=session,
+        budgets={
+            groceries: 500.00,
+            dining_out: 250.00,
+            rent: 1200.00,
+            utilities: 250.00,
+        },
+        start_date=dt.datetime(2025, 9, 1),
+        end_date=dt.datetime(2025, 9, 30),
+    )

@@ -12,6 +12,9 @@ def main():
     if data:
         db.populate_db(data) # TODO: some sort of error handling/alert if no data
 
+    session = db.get_db_session();
+    db.populate_sample_budgets(session)
+    session.close()
 
 if __name__ == "__main__":
     main()
